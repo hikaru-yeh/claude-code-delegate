@@ -103,7 +103,7 @@ def test_run_codex_sh_writes_result_contract(tmp_path: Path) -> None:
     result = json.loads(log_file.with_suffix(log_file.suffix + ".result.json").read_text(encoding="utf-8-sig"))
     assert result["status"] == "success"
     assert result["delegate"] == "codex"
-    assert result["model"] == "codex/gpt-5.4"
+    assert result["model"] == "codex/gpt-5.5"
     assert result["log_file"].endswith("/repo/.ai/codex_log.txt")
     assert (repo / ".ai" / "codex_log.txt.done").exists()
 
@@ -144,4 +144,4 @@ def test_run_codex_ps1_writes_result_contract(tmp_path: Path) -> None:
     result = json.loads(log_file.with_suffix(log_file.suffix + ".result.json").read_text(encoding="utf-8-sig"))
     assert result["status"] == "success"
     assert result["delegate"] == "codex"
-    assert result["model"] == "codex/gpt-5.4"
+    assert result["model"] == "codex/gpt-5.5"
