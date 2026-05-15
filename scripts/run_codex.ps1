@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$Prompt,
     [string]$Repo = "",
-    [string]$Model = "gpt-5.4",
+    [string]$Model = "gpt-5.5",
     [string]$OutputFile = "",
     [string]$LogFile = "",
     [bool]$Synchronous = $true
