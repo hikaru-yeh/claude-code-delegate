@@ -33,6 +33,20 @@ Both produced correct, runnable code. The semantic difference is style: `gpt-5.5
 - Wall-time pressure (interactive iteration, TDD-style loops).
 - Time-to-first-byte matters more than the final-byte quality.
 
+## The `spark` shorthand
+
+`gpt-5.3-codex-spark` is a low-latency, low-cost Codex model. There is no alias
+resolution in the wrapper — it passes `--model` straight through — so the
+shorthand is a documentation convention: when the user (or a brief) says
+**`spark`**, invoke the wrapper with `--model gpt-5.3-codex-spark`
+(`-Model gpt-5.3-codex-spark` in PowerShell).
+
+Reach for `spark` when the task is trivially mechanical and latency dominates —
+a fast first pass, a TDD-style loop, or a sweep where even `gpt-5.4` is more
+model than the edit needs. For anything where idiomatic style or subtle
+correctness matters, stay on the default. Confirm the exact name your CLI
+exposes with `codex models`.
+
 ## How to A/B another task in your project
 
 ```bash

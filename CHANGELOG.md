@@ -11,6 +11,32 @@ marketplace; see that repo's CHANGELOG for the catalog-side history.
 
 ## [Unreleased]
 
+### Added
+
+- `references/codex-prompt-blocks.md` — composable XML prompt blocks
+  (`<verification_loop>`, `<grounding_rules>`, `<action_safety>`, …), four
+  task recipes, and a prompt anti-pattern table for judgment-sensitive briefs.
+  Adapted from the `gpt-5-4-prompting` skill in
+  [`openai/codex-plugin-cc`](https://github.com/openai/codex-plugin-cc)
+  (Apache-2.0); reframed for this skill's single-shot brief-file workflow.
+
+### Changed
+
+- `SKILL.md` and `references/task-template.md` now point judgment-sensitive
+  tasks (debugging, write-capable changes, review, research) at the new
+  prompt-blocks reference; mechanical sweeps keep the flat template.
+- `references/patterns.md` (Pattern 5) and `references/review-checklist.md`:
+  added an explicit "do not auto-apply fixes from a review run — present
+  findings and ask the user first" rule.
+- `references/model-selection.md`: documented the `spark` shorthand
+  (`--model gpt-5.3-codex-spark`).
+
+### Fixed
+
+- `references/patterns.md` (Pattern 5): the review-mode code block used the
+  deprecated `--full-auto` flag; replaced with `--sandbox workspace-write` to
+  match `SKILL.md`, `wrapper.md`, and `examples.md`.
+
 ## [0.1.0] - 2026-05-15
 
 The initial published version. Captures the skill state at commit

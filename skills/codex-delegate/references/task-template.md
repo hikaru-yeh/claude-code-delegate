@@ -43,3 +43,15 @@ Save the brief at `.ai/codex_task_<name>.md`. If the task is part of a multi-age
 - Missing scope fence (Codex will then "improve" unrelated files)
 - Acceptance written as prose instead of executable verification
 - Asking Codex to "decide" between alternatives instead of just executing
+
+These are the failure modes of the *brief file*. The failure modes of the
+*task phrasing* (missing output contract, "think harder", mixing unrelated
+jobs) are separate — see `codex-prompt-blocks.md`.
+
+## Judgment-sensitive tasks
+
+For debugging, write-capable changes, review, or research, the flat template
+above is not enough on its own. Add the composable XML prompt blocks
+(`<verification_loop>`, `<grounding_rules>`, `<action_safety>`, …) from
+`codex-prompt-blocks.md` to the Goal/Constraints. A pure mechanical sweep
+does not need them.

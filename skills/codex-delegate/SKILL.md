@@ -76,7 +76,7 @@ Full routing table and good/bad examples: `references/delegation-targets.md`.
 
 ## Workflow
 
-1. **Brief**: write `.ai/codex_task_<name>.md` with Context / Goal / Constraints / Acceptance. Template: `references/task-template.md`. If the brief was already written by `agent-task-splitter` at `.ai/codex_task_<NNN>_<slug>.md`, read `.coord/plan.yml` for round context first.
+1. **Brief**: write `.ai/codex_task_<name>.md` with Context / Goal / Constraints / Acceptance. Template: `references/task-template.md`. For a judgment-sensitive task (debugging, write-capable change, review, research) — where an unsupported guess or a half-finished fix would hurt — also add the XML prompt blocks from `references/codex-prompt-blocks.md` to the Goal/Constraints. A pure mechanical sweep does not need them. If the brief was already written by `agent-task-splitter` at `.ai/codex_task_<NNN>_<slug>.md`, read `.coord/plan.yml` for round context first.
 
 2. **Run**: from Claude Code Bash, invoke the wrapper from its install location:
    ```bash
@@ -112,6 +112,7 @@ Full routing table and good/bad examples: `references/delegation-targets.md`.
 - `references/delegation-targets.md` — when to use vs avoid
 - `references/wrapper.md` — full wrapper invocation, env vars, Windows runner notes
 - `references/task-template.md` — task brief template
+- `references/codex-prompt-blocks.md` — XML prompt blocks + recipes + anti-patterns for judgment-sensitive briefs
 - `references/output-contract.md` — full `.result.json` schema, status semantics, `.fallback_claude` quota sentinel
 - `references/review-checklist.md` — extended acceptance gate
 - `references/patterns.md` — five single-task delegation shapes (context file, parallel, resume, structured output, review mode)
