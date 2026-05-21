@@ -34,3 +34,11 @@ Before accepting a Codex run, Claude must verify each of these:
 ## Decision
 
 If any answer is *no*, fix the task file or take the rest locally in Claude. Do not paper over a bad run.
+
+## Review-mode runs (Pattern 5)
+
+This checklist gates *acceptance of a delegated implementation*. A **review
+mode** run (`patterns.md` Pattern 5) is different: it produces candidate
+findings, not a diff to accept. After presenting those findings, stop — do not
+auto-apply fixes. Ask the user which issues they want addressed before
+touching any file, even when a fix looks obvious.

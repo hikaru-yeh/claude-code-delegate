@@ -132,10 +132,16 @@ Steps:
 2. Run review mode:
 
    ```bash
-   codex exec review --full-auto </dev/null
+   codex exec review --sandbox workspace-write </dev/null
    ```
 
 3. Read the review output as a hint, not a verdict. Claude still owns the acceptance decision and runs verification.
+
+**Do not auto-apply fixes from a review run.** After presenting the findings,
+stop. Surface them to the user and ask which, if any, they want fixed before
+touching a single file — even when a fix looks obvious. A review produces a
+list of *candidate* issues, not an approved work order; turning it straight
+into edits skips the user's prioritisation call.
 
 Review mode is cheaper than re-running the full implementation pattern when you only want a sanity check.
 
