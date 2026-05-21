@@ -37,6 +37,33 @@
 
 重點是：wrapper 成功不等於任務真正驗收通過。最終判斷仍然在 Claude。
 
+## 與 `openai/codex-plugin-cc` 的關係
+
+OpenAI 有官方的 Codex × Claude Code 整合：
+[`openai/codex-plugin-cc`](https://github.com/openai/codex-plugin-cc)。它是一個
+功能完整、以 broker 為核心的 plugin — 跟這個 skill 是不同的設計取向。兩者
+互補；下表是幫你選擇，不是排名。
+
+| 面向 | `codex-delegate`（本 repo） | `openai/codex-plugin-cc` |
+|---|---|---|
+| 形式 | 單一 Claude Code skill | 多指令 plugin 套件 |
+| 執行模型 | 輕量**同步** wrapper：執行 → 寫 `result.json` → 結束 | 常駐 **broker** process + 背景任務 |
+| 任務追蹤 | 刻意不做 — 一次執行、一份結果 | `/codex:status`、`/codex:result`、`/codex:cancel` |
+| 呼叫方式 | Claude 呼叫 skill，wrapper 腳本跑 Codex | Slash 指令（`/codex:review`、`/codex:rescue`…）加上主動式 subagent |
+| 審核關卡 | Claude 自己的驗收 gate（`skills/codex-delegate/references/review-checklist.md`） | 可選的 `Stop`-hook review gate |
+| 平台 | `bash` + PowerShell wrapper，Windows 實測，不需 Node | Node.js 18.18+ runtime |
+| 委派路由 | Claude / Codex / Gemini 三方路由表 | 以 Codex 為主 |
+| 維護者 · 授權 | Wenyu Chiou · MIT | OpenAI · Apache-2.0 |
+
+簡單說：想要背景非同步任務、slash 指令 UX、OpenAI 官方維護的整合 → 用
+`codex-plugin-cc`。想要一個輕量、同步、由 supervisor 把關、Windows 與 Linux
+行為一致、並能在 Claude / Codex / Gemini 之間路由的 skill → 用
+`codex-delegate`。
+
+`codex-delegate` 也借用了官方 plugin 的東西：prompt 工程的 reference
+（`skills/codex-delegate/references/codex-prompt-blocks.md`）就是改編自它的
+`gpt-5-4-prompting` skill（Apache-2.0）。
+
 ## 專案結構
 
 ```text
