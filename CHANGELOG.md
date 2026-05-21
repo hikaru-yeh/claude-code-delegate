@@ -49,6 +49,11 @@ marketplace; see that repo's CHANGELOG for the catalog-side history.
 - `references/patterns.md` (Pattern 5): the review-mode code block used the
   deprecated `--full-auto` flag; replaced with `--sandbox workspace-write` to
   match `SKILL.md`, `wrapper.md`, and `examples.md`.
+- `scripts/run_codex.ps1`: `Get-GitStatusSnapshot` returned `@($null)` (a
+  1-element array holding `$null`) on a clean repo instead of a true empty
+  array; now filters `$null` so the snapshot type is consistent. Latent
+  fragility — downstream code absorbed it — fixed for robustness and parity
+  with `gemini-delegate-skill`.
 
 ## [0.1.0] - 2026-05-15
 
