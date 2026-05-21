@@ -19,6 +19,8 @@ marketplace; see that repo's CHANGELOG for the catalog-side history.
   Adapted from the `gpt-5-4-prompting` skill in
   [`openai/codex-plugin-cc`](https://github.com/openai/codex-plugin-cc)
   (Apache-2.0); reframed for this skill's single-shot brief-file workflow.
+- `tests/test_wrappers.py`: regression coverage for `files_changed` —
+  populated on a git repo (bash + PowerShell) and `[]` on a non-git repo.
 
 ### Changed
 
@@ -30,6 +32,17 @@ marketplace; see that repo's CHANGELOG for the catalog-side history.
   findings and ask the user first" rule.
 - `references/model-selection.md`: documented the `spark` shorthand
   (`--model gpt-5.3-codex-spark`).
+- `scripts/run_codex.sh` and `scripts/run_codex.ps1` now auto-populate the
+  `files_changed` field of `result.json`. The wrapper takes a
+  `git status --porcelain` snapshot before and after the Codex run and diffs
+  them, so `files_changed` attributes edits to that run only. It degrades to
+  `[]` when the repo is not a git work tree, git is absent, or nothing
+  changed. The wrapper's own log / sentinel / `result.json` files are written
+  after the snapshot, so they never leak in.
+- `references/output-contract.md`: documented which `result.json` fields the
+  wrapper fills. `tests_run` and `risks` are deliberately *not* auto-filled —
+  the wrapper cannot see tests run inside Codex's sandbox, and risk is a
+  judgment call; both stay Claude's to fill during acceptance.
 
 ### Fixed
 
