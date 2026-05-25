@@ -93,6 +93,7 @@ def test_run_claude_sh_writes_result_contract(tmp_path: Path) -> None:
         os.chmod(fake_claude, 0o755)
 
     log_file = repo / ".ai" / "claude_log.txt"
+    output_file = repo / "outputs" / "claude_result.json"
     env = os.environ.copy()
     env["CLAUDE_PATH"] = to_bash_path(fake_claude)
 
@@ -106,7 +107,8 @@ def test_run_claude_sh_writes_result_contract(tmp_path: Path) -> None:
                 f"{bash_quote(Path(_BASH))} {bash_quote(ROOT / 'scripts' / 'run_claude.sh')} "
                 f"--prompt {bash_quote('do work')} "
                 f"--repo {bash_quote(repo)} "
-                f"--log-file {bash_quote(log_file)}"
+                f"--log-file {bash_quote(log_file)} "
+                f"--output-file {bash_quote(output_file)}"
             ),
         ],
         capture_output=True,
@@ -121,7 +123,11 @@ def test_run_claude_sh_writes_result_contract(tmp_path: Path) -> None:
     assert result["delegate"] == "claude"
     assert result["model"] == "claude/default"
     assert result["log_file"].endswith("/repo/.ai/claude_log.txt")
+    assert result["output_file"].endswith("/repo/outputs/claude_result.json")
     assert (repo / ".ai" / "claude_log.txt.done").exists()
+    assert output_file.exists()
+    assert output_file.read_text(encoding="utf-8").strip() == '{"result":"delegate ok"}'
+    assert "[MODEL_USED:" not in output_file.read_text(encoding="utf-8")
 
 
 @pytest.mark.skipif(_BASH is None, reason="bash (git-bash on Windows, system bash elsewhere) not available")

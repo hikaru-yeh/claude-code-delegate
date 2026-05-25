@@ -64,6 +64,13 @@ write_result_json() {
     } > "$RESULT_PATH"
 }
 
+write_output_file() {
+    if [[ -n "$OUTPUT_FILE" ]]; then
+        mkdir -p "$(dirname "$OUTPUT_FILE")"
+        printf '%s\n' "$OUTPUT" > "$OUTPUT_FILE"
+    fi
+}
+
 PROMPT=""
 REPO="${PWD}"
 MODEL=""
@@ -144,6 +151,7 @@ OUTPUT=$(
 
 CHANGED_AFTER="$(git_status_snapshot "$REPO")"
 FILES_CHANGED_JSON="$(compute_files_changed_json "$CHANGED_BEFORE" "$CHANGED_AFTER")"
+write_output_file
 
 if is_quota_error "$OUTPUT" "$EXIT_CODE"; then
     echo "Claude quota/rate-limit exceeded; creating .fallback_codex sentinel for Codex to handle" >&2
