@@ -13,7 +13,7 @@ Claude is a delegate, not a second supervisor. Give it bounded work with explici
 
 ## Hard rules
 
-- Before invoking the wrapper, run `claude --version`. If it fails, stop and tell the user to install and authenticate Claude Code CLI.
+- Before invoking the wrapper, check the same executable the wrapper will use: Bash `${CLAUDE_PATH:-claude} --version`; PowerShell `if ($env:CLAUDE_PATH) { & $env:CLAUDE_PATH --version } else { claude --version }`. If it fails, stop and tell the user to install and authenticate Claude Code CLI.
 - Use the wrapper instead of raw `claude -p` for shipping tasks. The wrapper handles stdin closure, structured result JSON, quota fallback, and changed-file capture.
 - Wrapper `success` is not acceptance. Codex still reviews the diff, confirms scope, and runs verification.
 - Do not ask Claude to call Codex back, consult another agent, or continue the delegation chain.
@@ -43,7 +43,7 @@ Do not delegate when the task needs supervisor judgment:
 
 ## Workflow
 
-1. **Check CLI**: run `claude --version` from the repo shell. If it fails, stop and report the missing dependency.
+1. **Check CLI**: check the same executable the wrapper will use: Bash `${CLAUDE_PATH:-claude} --version`; PowerShell `if ($env:CLAUDE_PATH) { & $env:CLAUDE_PATH --version } else { claude --version }`. If it fails, stop and report the missing dependency.
 
 2. **Brief**: write `.ai/claude_task_<name>.md` with Context / Goal / Constraints / Acceptance. Use `references/task-template.md`.
 

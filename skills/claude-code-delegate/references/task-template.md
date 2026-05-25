@@ -25,7 +25,7 @@ Save the brief at `.ai/claude_task_<name>.md`.
 - Do not make security, product, or release decisions.
 - Do not call Codex or other agents.
 - Do not add credentials, tokens, secrets, or absolute local paths.
-- Do not update README files unless the Codex supervisor confirms the README gate.
+- Do not update README files unless Codex confirms the README gate: before any README edit, Codex must tell the user what README change is needed, propose a short plan, wait for user confirmation, and keep localized README files synchronized.
 
 ## Acceptance
 - Required tests or checks: <commands>

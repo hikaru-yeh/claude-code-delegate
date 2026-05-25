@@ -42,7 +42,7 @@ PowerShell parameters:
 - `-OutputFile`
 - `-LogFile`
 - `-AllowedTools`
-- `-Bare`
+- `-Bare`: defaults to true; disable bare mode with `-Bare:$false`.
 - `-Synchronous`
 
 Call the wrapper inline so the log, output file, sentinel files, and result JSON are written before Codex reads them.

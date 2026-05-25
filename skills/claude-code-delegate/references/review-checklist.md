@@ -12,7 +12,7 @@ Before accepting a Claude delegate run, Codex verifies each item below.
 ## Execution scope
 
 - [ ] Claude stayed inside the allowed write scope.
-- [ ] No README changes were made unless the user confirmed the README gate.
+- [ ] No README changes were made unless the README gate was followed: Codex told the user what README change was needed, proposed a short plan, waited for user confirmation, and kept localized README files synchronized.
 - [ ] No CHANGELOG, script, test, or unrelated skill files changed unless they were explicitly allowed.
 - [ ] No credentials, tokens, secrets, invented APIs, invented paths, or absolute local paths were added.
 
