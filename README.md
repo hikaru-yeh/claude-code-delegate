@@ -1,14 +1,14 @@
-# Codex Delegate
+# Claude Code Delegate
 
 > [繁體中文](README_zh-TW.md)
 
-`codex-delegate` is a Claude-oriented skill for using Codex CLI as an execution specialist for implementation-heavy coding work while keeping planning, review, and acceptance in Claude.
+`claude-code-delegate` is a Codex-oriented skill for using the local Claude Code CLI as an execution specialist while Codex keeps planning, review, and acceptance. Codex writes the brief, launches Claude Code through a thin wrapper, inspects the wrapper output and git diff, and only then decides whether the work is accepted.
 
-> 📚 Part of the [**agentic AI learning roadmap**](https://github.com/WenyuChiou/awesome-agentic-ai-zh) — a 7-stage curated path for building agentic AI, multilingual (zh-TW · zh-CN · English). This skill is referenced in §13 (Multi-LLM Delegation).
+This repository is the reversed fork of the earlier delegation direction: Codex is now the supervisor, and Claude Code CLI is the executor.
 
 ## Positioning
 
-This skill is for tasks that are expensive in tokens but cheap in judgment:
+This skill is for work where Codex benefits from delegating execution while retaining judgment:
 
 - multi-file implementation
 - mechanical refactors
@@ -16,67 +16,77 @@ This skill is for tasks that are expensive in tokens but cheap in judgment:
 - test scaffolding
 - large batch edits
 
-It is not meant for architecture, root-cause debugging, security review, or ambiguous product decisions.
-
-## What Changed In This Version
-
-- clearer routing boundary between Claude, Codex, and Gemini
-- explicit supervisor acceptance gate
-- machine-readable wrapper output via `<log>.result.json`
-- regression tests for bash and PowerShell wrappers
+It is not a replacement for Codex's planning, architecture decisions, root-cause analysis, security review, or final acceptance.
 
 ## Core Pattern
 
-1. Claude writes a task file describing scope and constraints.
-2. Claude launches Codex synchronously through the wrapper.
-3. The wrapper emits sentinel files plus `result.json`.
-4. Claude reviews the diff and runs verification before accepting the result.
+1. Codex decides that a task is bounded enough to delegate.
+2. Codex writes `.ai/claude_task_<name>.md` with scope, constraints, expected output, and verification notes.
+3. Codex launches Claude Code synchronously through `scripts/run_claude.sh` or `scripts/run_claude.ps1`.
+4. The wrapper emits logs, sentinels, and `<log>.result.json`.
+5. Codex reviews the `.result.json`, the changed-file attribution, the git diff, and any relevant test output before accepting or rejecting the result.
 
-Wrapper success is not final acceptance. Claude still owns the judgment.
-
-## Relation to `openai/codex-plugin-cc`
-
-OpenAI ships an official Codex integration for Claude Code,
-[`openai/codex-plugin-cc`](https://github.com/openai/codex-plugin-cc). It is a
-capable, broker-based plugin — and a different design point from this skill.
-The two are complementary; the table below is meant to help you pick, not to
-rank them.
-
-| Aspect | `codex-delegate` (this repo) | `openai/codex-plugin-cc` |
-|---|---|---|
-| Form | A single Claude Code skill | A multi-command plugin suite |
-| Execution model | Thin **synchronous** wrapper: run → write `result.json` → exit | Persistent **broker** process with background jobs |
-| Job tracking | None by design — one run, one result | `/codex:status`, `/codex:result`, `/codex:cancel` |
-| Invocation | Claude invokes the skill; the wrapper script runs Codex | Slash commands (`/codex:review`, `/codex:rescue`, …) plus a proactive subagent |
-| Review gate | Claude's own acceptance gate (`skills/codex-delegate/references/review-checklist.md`) | Optional `Stop`-hook review gate |
-| Platform | `bash` + PowerShell wrappers, Windows-tested, no Node runtime | Node.js 18.18+ runtime |
-| Delegate routing | Three-way Claude / Codex / Gemini routing table | Codex-focused |
-| Maintainer · License | Wenyu Chiou · MIT | OpenAI · Apache-2.0 |
-
-In short: reach for `codex-plugin-cc` when you want background async jobs, a
-slash-command UX, and an OpenAI-maintained integration. Reach for
-`codex-delegate` when you want a thin, synchronous, supervisor-gated skill that
-keeps acceptance in Claude, behaves the same on Windows and Linux, and routes
-across Claude / Codex / Gemini.
-
-`codex-delegate` also borrows from the official plugin: the prompt-engineering
-reference (`skills/codex-delegate/references/codex-prompt-blocks.md`) is adapted
-from its `gpt-5-4-prompting` skill (Apache-2.0).
+Wrapper success is not acceptance. It means the Claude Code execution returned a valid wrapper result; Codex still owns review and final judgment.
 
 ## Repository Layout
 
 ```text
-codex-delegate/
-├── SKILL.md
+claude-code-delegate/
 ├── README.md
 ├── README_zh-TW.md
+├── CHANGELOG.md
+├── skills/
+│   └── claude-code-delegate/
 ├── scripts/
-│   ├── run_codex.sh
-│   └── run_codex.ps1
-├── tests/
-│   └── test_wrappers.py
-└── references/
+│   ├── run_claude.sh
+│   └── run_claude.ps1
+└── tests/
+    └── test_wrappers.py
 ```
+
+## Installation
+
+Install Claude Code CLI separately and make sure it is available on `PATH`:
+
+```bash
+claude --version
+```
+
+Install or copy `skills/claude-code-delegate` into the Codex skills location you use for local workflows. Keep the wrapper scripts in this repository or copy them with the skill if your workflow expects a standalone bundle.
+
+## Usage
+
+Create a task brief for Claude Code:
+
+```bash
+mkdir -p .ai
+$EDITOR .ai/claude_task_example.md
+```
+
+Run the Bash wrapper:
+
+```bash
+bash scripts/run_claude.sh .ai/claude_task_example.md
+```
+
+Or run the PowerShell wrapper:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_claude.ps1 .ai/claude_task_example.md
+```
+
+After the wrapper exits, Codex reviews the generated `.result.json` and the git diff before accepting the work. If the wrapper reports success but the diff is wrong, incomplete, risky, or unverified, Codex rejects or revises the result instead of treating wrapper success as completion.
+
+## Output Contract
+
+The wrapper writes a machine-readable result file next to its log. The contract includes:
+
+- `delegate: "claude"` to identify Claude Code as the executor.
+- `fallback_codex` for cases where Codex should resume directly instead of relying on the delegated run.
+- wrapper status and sentinel metadata.
+- changed-file attribution used during Codex review.
+
+The wrapper result is evidence for review, not an acceptance decision.
 
 ## Testing
 
@@ -84,29 +94,12 @@ codex-delegate/
 python -m pytest -q
 ```
 
-Current wrapper tests cover:
+Wrapper tests cover:
 
-- success-path `result.json` generation
-- PowerShell wrapper contract behavior
-
-## Installation
-
-**1. Install the skill** via the [`ai-research-skills` Claude Code marketplace](https://github.com/WenyuChiou/ai-research-skills):
-
-```bash
-claude plugin marketplace add WenyuChiou/ai-research-skills
-claude plugin install codex-delegate@ai-research-skills
-```
-
-Default scope is `user` (this OS account, all projects). Add
-`--scope project` to install only for the current project.
-
-**2. Make sure Codex CLI is on `$PATH`:**
-
-```bash
-npm install -g @openai/codex
-codex --version
-```
+- success contract generation
+- Bash behavior
+- PowerShell behavior
+- changed-file attribution
 
 ## License
 
