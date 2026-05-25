@@ -1,11 +1,13 @@
 # Claude wrapper reference
 
-The `scripts/run_claude.sh` and `scripts/run_claude.ps1` wrappers run Claude Code CLI synchronously, detect quota and rate-limit failures, write sentinel files, capture delegate output, and emit a machine-readable `<log>.result.json`.
+In this project, the `scripts/run_claude.sh` and `scripts/run_claude.ps1` wrappers live in the repository-root `scripts/` directory. They run Claude Code CLI synchronously, detect quota and rate-limit failures, write sentinel files, capture delegate output, and emit a machine-readable `<log>.result.json`.
+
+For installed skill use outside this repo, run from this repo/project root or adapt/copy the wrapper path to wherever you installed the scripts.
 
 ## Bash invocation
 
 ```bash
-bash <skill-root>/scripts/run_claude.sh \
+bash scripts/run_claude.sh \
   --prompt "Read .ai/claude_task_<name>.md and execute all instructions inside." \
   --repo "$PWD" \
   --log-file .ai/claude_log_<name>.txt \
@@ -25,7 +27,7 @@ Optional flags:
 ## PowerShell invocation
 
 ```powershell
-& "<skill-root>\scripts\run_claude.ps1" `
+& ".\scripts\run_claude.ps1" `
     -Prompt "Read .ai/claude_task_<name>.md and execute all instructions inside." `
     -Repo (Get-Location).Path `
     -LogFile ".ai\claude_log_<name>.txt" `
