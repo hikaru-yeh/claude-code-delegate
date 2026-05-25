@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -63,34 +64,49 @@ def to_bash_path(path: Path) -> str:
     return resolved.as_posix()
 
 
+def bash_quote(path_or_text: str | Path) -> str:
+    if isinstance(path_or_text, Path):
+        return shlex.quote(to_bash_path(path_or_text))
+    return shlex.quote(path_or_text)
+
+
 _BASH = _resolve_bash()
 
 
+def read_result_json(log_file: Path) -> dict[str, object]:
+    return json.loads(log_file.with_suffix(log_file.suffix + ".result.json").read_text(encoding="utf-8-sig"))
+
+
 @pytest.mark.skipif(_BASH is None, reason="bash (git-bash on Windows, system bash elsewhere) not available")
-def test_run_codex_sh_writes_result_contract(tmp_path: Path) -> None:
+def test_run_claude_sh_writes_result_contract(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
 
-    fake_codex = tmp_path / "fake_codex.sh"
-    fake_codex.write_text("#!/usr/bin/env bash\necho 'delegate ok'\n", encoding="utf-8", newline="\n")
+    fake_claude = tmp_path / "fake_claude.sh"
+    fake_claude.write_text(
+        "#!/usr/bin/env bash\n"
+        'echo \'{"result":"delegate ok"}\'\n',
+        encoding="utf-8",
+        newline="\n",
+    )
     if sys.platform != "win32":
-        os.chmod(fake_codex, 0o755)
+        os.chmod(fake_claude, 0o755)
 
-    log_file = repo / ".ai" / "codex_log.txt"
+    log_file = repo / ".ai" / "claude_log.txt"
     env = os.environ.copy()
-    env["CODEX_PATH"] = to_bash_path(fake_codex)
+    env["CLAUDE_PATH"] = to_bash_path(fake_claude)
 
     proc = subprocess.run(
         [
             _BASH,
             "-lc",
             (
-                f"chmod +x '{to_bash_path(fake_codex)}' && "
-                f"CODEX_PATH='{to_bash_path(fake_codex)}' "
-                f"'{to_bash_path(Path(_BASH))}' '{to_bash_path(ROOT / 'scripts' / 'run_codex.sh')}' "
-                f"--prompt 'do work' "
-                f"--repo '{to_bash_path(repo)}' "
-                f"--log-file '{to_bash_path(log_file)}'"
+                f"chmod +x {bash_quote(fake_claude)} && "
+                f"CLAUDE_PATH={bash_quote(fake_claude)} "
+                f"{bash_quote(Path(_BASH))} {bash_quote(ROOT / 'scripts' / 'run_claude.sh')} "
+                f"--prompt {bash_quote('do work')} "
+                f"--repo {bash_quote(repo)} "
+                f"--log-file {bash_quote(log_file)}"
             ),
         ],
         capture_output=True,
@@ -100,50 +116,48 @@ def test_run_codex_sh_writes_result_contract(tmp_path: Path) -> None:
     )
 
     assert proc.returncode == 0, proc.stderr
-    result = json.loads(log_file.with_suffix(log_file.suffix + ".result.json").read_text(encoding="utf-8-sig"))
+    result = read_result_json(log_file)
     assert result["status"] == "success"
-    assert result["delegate"] == "codex"
-    assert result["model"] == "codex/gpt-5.5"
-    assert result["log_file"].endswith("/repo/.ai/codex_log.txt")
-    assert (repo / ".ai" / "codex_log.txt.done").exists()
+    assert result["delegate"] == "claude"
+    assert result["model"] == "claude/default"
+    assert result["log_file"].endswith("/repo/.ai/claude_log.txt")
+    assert (repo / ".ai" / "claude_log.txt.done").exists()
 
 
 @pytest.mark.skipif(_BASH is None, reason="bash (git-bash on Windows, system bash elsewhere) not available")
 @pytest.mark.skipif(shutil.which("git") is None, reason="git not on PATH")
-def test_run_codex_sh_reports_files_changed(tmp_path: Path) -> None:
+def test_run_claude_sh_reports_files_changed(tmp_path: Path) -> None:
     """files_changed is auto-derived from a git porcelain snapshot diff."""
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
 
-    # Fake codex writes a file into the repo. Arg 5 is the `-C <repo>` value
-    # (codex args: exec --sandbox workspace-write -C <repo> -m <model> <prompt>).
-    fake_codex = tmp_path / "fake_codex.sh"
-    fake_codex.write_text(
+    fake_claude = tmp_path / "fake_claude.sh"
+    fake_claude.write_text(
         "#!/usr/bin/env bash\n"
-        'echo "delegated content" > "$5/delegated_file.txt"\n'
-        "echo 'delegate ok'\n",
+        "printf 'delegated content\\n' > delegated_file.txt\n"
+        'echo \'{"result":"delegate ok"}\'\n',
         encoding="utf-8",
         newline="\n",
     )
     if sys.platform != "win32":
-        os.chmod(fake_codex, 0o755)
+        os.chmod(fake_claude, 0o755)
 
-    log_file = repo / ".ai" / "codex_log.txt"
+    log_file = repo / ".ai" / "claude_log.txt"
     env = os.environ.copy()
-    env["CODEX_PATH"] = to_bash_path(fake_codex)
+    env["CLAUDE_PATH"] = to_bash_path(fake_claude)
 
     proc = subprocess.run(
         [
             _BASH,
             "-lc",
             (
-                f"chmod +x '{to_bash_path(fake_codex)}' && "
-                f"CODEX_PATH='{to_bash_path(fake_codex)}' "
-                f"'{to_bash_path(Path(_BASH))}' '{to_bash_path(ROOT / 'scripts' / 'run_codex.sh')}' "
-                f"--prompt 'do work' "
-                f"--repo '{to_bash_path(repo)}' "
-                f"--log-file '{to_bash_path(log_file)}'"
+                f"chmod +x {bash_quote(fake_claude)} && "
+                f"CLAUDE_PATH={bash_quote(fake_claude)} "
+                f"{bash_quote(Path(_BASH))} {bash_quote(ROOT / 'scripts' / 'run_claude.sh')} "
+                f"--prompt {bash_quote('do work')} "
+                f"--repo {bash_quote(repo)} "
+                f"--log-file {bash_quote(log_file)}"
             ),
         ],
         capture_output=True,
@@ -153,44 +167,41 @@ def test_run_codex_sh_reports_files_changed(tmp_path: Path) -> None:
     )
 
     assert proc.returncode == 0, proc.stderr
-    result = json.loads(log_file.with_suffix(log_file.suffix + ".result.json").read_text(encoding="utf-8-sig"))
+    result = read_result_json(log_file)
     assert result["status"] == "success"
     assert result["files_changed"] == ["delegated_file.txt"]
 
 
-@pytest.mark.skipif(_BASH is None, reason="bash (git-bash on Windows, system bash elsewhere) not available")
-def test_run_codex_sh_files_changed_empty_when_not_git(tmp_path: Path) -> None:
-    """files_changed degrades to [] when the repo is not a git work tree."""
+@pytest.mark.skipif(shutil.which("powershell") is None, reason="powershell not on PATH")
+@pytest.mark.skipif(sys.platform != "win32", reason="PowerShell wrapper test uses Windows cmd fake executable")
+def test_run_claude_ps1_writes_result_contract(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
-    repo.mkdir()  # deliberately NOT a git repo
+    repo.mkdir()
 
-    fake_codex = tmp_path / "fake_codex.sh"
-    fake_codex.write_text(
-        "#!/usr/bin/env bash\n"
-        'echo "delegated content" > "$5/delegated_file.txt"\n'
-        "echo 'delegate ok'\n",
+    fake_claude = tmp_path / "claude.cmd"
+    fake_claude.write_text(
+        "@echo off\r\n"
+        'echo {"result":"delegate ok"}\r\n',
         encoding="utf-8",
-        newline="\n",
     )
-    if sys.platform != "win32":
-        os.chmod(fake_codex, 0o755)
 
-    log_file = repo / ".ai" / "codex_log.txt"
+    log_file = repo / ".ai" / "claude_log.txt"
     env = os.environ.copy()
-    env["CODEX_PATH"] = to_bash_path(fake_codex)
+    env["CLAUDE_PATH"] = str(fake_claude)
 
     proc = subprocess.run(
         [
-            _BASH,
-            "-lc",
-            (
-                f"chmod +x '{to_bash_path(fake_codex)}' && "
-                f"CODEX_PATH='{to_bash_path(fake_codex)}' "
-                f"'{to_bash_path(Path(_BASH))}' '{to_bash_path(ROOT / 'scripts' / 'run_codex.sh')}' "
-                f"--prompt 'do work' "
-                f"--repo '{to_bash_path(repo)}' "
-                f"--log-file '{to_bash_path(log_file)}'"
-            ),
+            "powershell",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(ROOT / "scripts" / "run_claude.ps1"),
+            "-Prompt",
+            "do work",
+            "-Repo",
+            str(repo),
+            "-LogFile",
+            str(log_file),
         ],
         capture_output=True,
         text=True,
@@ -199,31 +210,32 @@ def test_run_codex_sh_files_changed_empty_when_not_git(tmp_path: Path) -> None:
     )
 
     assert proc.returncode == 0, proc.stderr
-    result = json.loads(log_file.with_suffix(log_file.suffix + ".result.json").read_text(encoding="utf-8-sig"))
+    result = read_result_json(log_file)
     assert result["status"] == "success"
-    assert result["files_changed"] == []
+    assert result["delegate"] == "claude"
+    assert result["model"] == "claude/default"
 
 
 @pytest.mark.skipif(shutil.which("powershell") is None, reason="powershell not on PATH")
+@pytest.mark.skipif(sys.platform != "win32", reason="PowerShell wrapper test uses Windows cmd fake executable")
 @pytest.mark.skipif(shutil.which("git") is None, reason="git not on PATH")
-def test_run_codex_ps1_reports_files_changed(tmp_path: Path) -> None:
+def test_run_claude_ps1_reports_files_changed(tmp_path: Path) -> None:
     """PowerShell wrapper: files_changed is auto-derived from git porcelain."""
     repo = tmp_path / "repo"
     repo.mkdir()
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
 
-    # Fake codex writes a file into the repo. %~5 is the `-C <repo>` value.
-    fake_codex = tmp_path / "codex.cmd"
-    fake_codex.write_text(
+    fake_claude = tmp_path / "claude.cmd"
+    fake_claude.write_text(
         "@echo off\r\n"
-        'echo delegated content>"%~5\\delegated_file.txt"\r\n'
-        "echo delegate ok\r\n",
+        'echo delegated content>"%CD%\\delegated_file.txt"\r\n'
+        'echo {"result":"delegate ok"}\r\n',
         encoding="utf-8",
     )
 
-    log_file = repo / ".ai" / "codex_ps_log.txt"
+    log_file = repo / ".ai" / "claude_log.txt"
     env = os.environ.copy()
-    env["CODEX_PATH"] = str(fake_codex)
+    env["CLAUDE_PATH"] = str(fake_claude)
 
     proc = subprocess.run(
         [
@@ -231,7 +243,7 @@ def test_run_codex_ps1_reports_files_changed(tmp_path: Path) -> None:
             "-ExecutionPolicy",
             "Bypass",
             "-File",
-            str(ROOT / "scripts" / "run_codex.ps1"),
+            str(ROOT / "scripts" / "run_claude.ps1"),
             "-Prompt",
             "do work",
             "-Repo",
@@ -246,89 +258,6 @@ def test_run_codex_ps1_reports_files_changed(tmp_path: Path) -> None:
     )
 
     assert proc.returncode == 0, proc.stderr
-    result = json.loads(log_file.with_suffix(log_file.suffix + ".result.json").read_text(encoding="utf-8-sig"))
+    result = read_result_json(log_file)
     assert result["status"] == "success"
     assert result["files_changed"] == ["delegated_file.txt"]
-
-
-@pytest.mark.skipif(shutil.which("powershell") is None, reason="powershell not on PATH")
-def test_run_codex_ps1_files_changed_empty_when_not_git(tmp_path: Path) -> None:
-    """PS wrapper: files_changed degrades to [] when the repo is not a git work tree."""
-    repo = tmp_path / "repo"
-    repo.mkdir()  # deliberately NOT a git repo
-
-    fake_codex = tmp_path / "codex.cmd"
-    fake_codex.write_text(
-        "@echo off\r\n"
-        'echo delegated content>"%~5\\delegated_file.txt"\r\n'
-        "echo delegate ok\r\n",
-        encoding="utf-8",
-    )
-
-    log_file = repo / ".ai" / "codex_ps_log.txt"
-    env = os.environ.copy()
-    env["CODEX_PATH"] = str(fake_codex)
-
-    proc = subprocess.run(
-        [
-            "powershell",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            str(ROOT / "scripts" / "run_codex.ps1"),
-            "-Prompt",
-            "do work",
-            "-Repo",
-            str(repo),
-            "-LogFile",
-            str(log_file),
-        ],
-        capture_output=True,
-        text=True,
-        env=env,
-        check=False,
-    )
-
-    assert proc.returncode == 0, proc.stderr
-    result = json.loads(log_file.with_suffix(log_file.suffix + ".result.json").read_text(encoding="utf-8-sig"))
-    assert result["status"] == "success"
-    assert result["files_changed"] == []
-
-
-@pytest.mark.skipif(shutil.which("powershell") is None, reason="powershell not on PATH")
-def test_run_codex_ps1_writes_result_contract(tmp_path: Path) -> None:
-    repo = tmp_path / "repo"
-    repo.mkdir()
-
-    fake_codex = tmp_path / "codex.cmd"
-    fake_codex.write_text("@echo off\r\necho delegate ok\r\n", encoding="utf-8")
-
-    log_file = repo / ".ai" / "codex_ps_log.txt"
-    env = os.environ.copy()
-    env["CODEX_PATH"] = str(fake_codex)
-
-    proc = subprocess.run(
-        [
-            "powershell",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-File",
-            str(ROOT / "scripts" / "run_codex.ps1"),
-            "-Prompt",
-            "do work",
-            "-Repo",
-            str(repo),
-            "-LogFile",
-            str(log_file),
-        ],
-        capture_output=True,
-        text=True,
-        env=env,
-        check=False,
-    )
-
-    assert proc.returncode == 0, proc.stderr
-    result = json.loads(log_file.with_suffix(log_file.suffix + ".result.json").read_text(encoding="utf-8-sig"))
-    assert result["status"] == "success"
-    assert result["delegate"] == "codex"
-    assert result["model"] == "codex/gpt-5.5"
