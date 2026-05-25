@@ -43,7 +43,7 @@ function Test-QuotaError {
     if ($ExitCode -eq 429) { return $true }
     $patterns = @(
         "quota exceeded", "rate limit", "rate_limit", "quota_exceeded",
-        "insufficient_quota", "too many requests", "429"
+        "insufficient_quota", "too many requests", "credit balance is too low", "429"
     )
     foreach ($pattern in $patterns) {
         if ($Output -ilike "*$pattern*") { return $true }

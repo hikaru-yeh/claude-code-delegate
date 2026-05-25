@@ -121,6 +121,7 @@ is_quota_error() {
         "quota_exceeded"
         "insufficient_quota"
         "too many requests"
+        "credit balance is too low"
         "429"
     )
     for p in "${patterns[@]}"; do

@@ -131,6 +131,52 @@ def test_run_claude_sh_writes_result_contract(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(_BASH is None, reason="bash (git-bash on Windows, system bash elsewhere) not available")
+def test_run_claude_sh_credit_balance_falls_back_to_codex(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    fake_claude = tmp_path / "fake_claude.sh"
+    fake_claude.write_text(
+        "#!/usr/bin/env bash\n"
+        "echo 'Credit balance is too low'\n"
+        "exit 1\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    if sys.platform != "win32":
+        os.chmod(fake_claude, 0o755)
+
+    log_file = repo / ".ai" / "claude_log.txt"
+    env = os.environ.copy()
+    env["CLAUDE_PATH"] = to_bash_path(fake_claude)
+
+    proc = subprocess.run(
+        [
+            _BASH,
+            "-lc",
+            (
+                f"chmod +x {bash_quote(fake_claude)} && "
+                f"CLAUDE_PATH={bash_quote(fake_claude)} "
+                f"{bash_quote(Path(_BASH))} {bash_quote(ROOT / 'scripts' / 'run_claude.sh')} "
+                f"--prompt {bash_quote('do work')} "
+                f"--repo {bash_quote(repo)} "
+                f"--log-file {bash_quote(log_file)}"
+            ),
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    result = read_result_json(log_file)
+    assert result["status"] == "fallback"
+    assert result["delegate"] == "claude"
+    assert (repo / ".ai" / "claude_log.txt.fallback_codex").exists()
+
+
+@pytest.mark.skipif(_BASH is None, reason="bash (git-bash on Windows, system bash elsewhere) not available")
 @pytest.mark.skipif(shutil.which("git") is None, reason="git not on PATH")
 def test_run_claude_sh_reports_files_changed(tmp_path: Path) -> None:
     """files_changed is auto-derived from a git porcelain snapshot diff."""
@@ -220,6 +266,51 @@ def test_run_claude_ps1_writes_result_contract(tmp_path: Path) -> None:
     assert result["status"] == "success"
     assert result["delegate"] == "claude"
     assert result["model"] == "claude/default"
+
+
+@pytest.mark.skipif(shutil.which("powershell") is None, reason="powershell not on PATH")
+@pytest.mark.skipif(sys.platform != "win32", reason="PowerShell wrapper test uses Windows cmd fake executable")
+def test_run_claude_ps1_credit_balance_falls_back_to_codex(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    fake_claude = tmp_path / "claude.cmd"
+    fake_claude.write_text(
+        "@echo off\r\n"
+        "echo Credit balance is too low\r\n"
+        "exit /b 1\r\n",
+        encoding="utf-8",
+    )
+
+    log_file = repo / ".ai" / "claude_log.txt"
+    env = os.environ.copy()
+    env["CLAUDE_PATH"] = str(fake_claude)
+
+    proc = subprocess.run(
+        [
+            "powershell",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(ROOT / "scripts" / "run_claude.ps1"),
+            "-Prompt",
+            "do work",
+            "-Repo",
+            str(repo),
+            "-LogFile",
+            str(log_file),
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    result = read_result_json(log_file)
+    assert result["status"] == "fallback"
+    assert result["delegate"] == "claude"
+    assert (repo / ".ai" / "claude_log.txt.fallback_codex").exists()
 
 
 @pytest.mark.skipif(shutil.which("powershell") is None, reason="powershell not on PATH")
