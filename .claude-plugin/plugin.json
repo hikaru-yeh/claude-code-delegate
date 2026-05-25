@@ -1,17 +1,16 @@
 {
-  "name": "codex-delegate",
-  "description": "Hand token-heavy mechanical work (batch edits, scaffolding, refactors, test generation, plotting scripts) from Claude to Codex CLI.",
+  "name": "claude-code-delegate",
+  "description": "Hand scoped implementation work from Codex to local Claude Code CLI while Codex keeps planning, review, and acceptance.",
   "version": "0.1.0",
   "author": {
     "name": "Wenyu Chiou"
   },
-  "homepage": "https://github.com/WenyuChiou/codex-delegate",
-  "repository": "https://github.com/WenyuChiou/codex-delegate",
   "license": "MIT",
   "keywords": [
-    "codex",
+    "claude-code",
     "delegation",
     "multi-ai",
+    "codex",
     "code-generation"
   ]
 }

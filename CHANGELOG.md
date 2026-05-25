@@ -11,6 +11,7 @@ All notable changes to `claude-code-delegate` are documented here. The project f
 - Updated the machine-readable output contract around `delegate: "claude"` and Codex-owned acceptance.
 - Reframed the skill docs and review checklist for Codex-facing planning, review, and acceptance.
 - Removed the old Codex delegate surface from user-facing documentation.
+- Updated examples and plugin metadata for the Codex-supervised Claude Code workflow.
 
 ## 0.1.0 - 2026-05-25
 
