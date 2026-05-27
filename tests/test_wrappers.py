@@ -27,6 +27,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SKILL_SCRIPTS = ROOT / "skills" / "claude-code-delegate" / "scripts"
 
 
 def _resolve_bash() -> str | None:
@@ -75,6 +76,12 @@ _BASH = _resolve_bash()
 
 def read_result_json(log_file: Path) -> dict[str, object]:
     return json.loads(log_file.with_suffix(log_file.suffix + ".result.json").read_text(encoding="utf-8-sig"))
+
+
+def test_bundled_skill_wrappers_match_development_copies() -> None:
+    """The user-scope skill bundle must contain the same wrappers tested here."""
+    for name in ("run_claude.sh", "run_claude.ps1"):
+        assert (SKILL_SCRIPTS / name).read_bytes() == (ROOT / "scripts" / name).read_bytes()
 
 
 @pytest.mark.skipif(_BASH is None, reason="bash (git-bash on Windows, system bash elsewhere) not available")

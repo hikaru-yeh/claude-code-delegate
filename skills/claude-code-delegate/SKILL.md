@@ -2,7 +2,7 @@
 name: claude-code-delegate
 description: Delegates implementation-heavy or repetitive coding work from Codex to local Claude Code CLI. Codex keeps planning, review, and acceptance. Avoid for architecture, security, or product decisions, and avoid tasks that need Claude to call Codex back.
 license: MIT
-compatibility: Designed for Codex skill hosts. In this project, wrapper scripts live at the repository-root scripts/run_claude.sh and scripts/run_claude.ps1. For installed skill use, run from this repo/project root or adapt/copy the wrapper path to wherever you installed the scripts.
+compatibility: Designed for Codex skill hosts. The skill bundle includes wrapper scripts at scripts/run_claude.sh and scripts/run_claude.ps1 next to this SKILL.md.
 ---
 
 # Claude Code Delegate Skill
@@ -47,16 +47,16 @@ Do not delegate when the task needs supervisor judgment:
 
 2. **Brief**: write `.ai/claude_task_<name>.md` with Context / Goal / Constraints / Acceptance. Use `references/task-template.md`.
 
-3. **Run**: from this repo/project root, invoke the repository-root wrapper:
+3. **Run**: invoke the bundled wrapper from the installed skill directory:
    ```bash
-   bash scripts/run_claude.sh \
+   bash ~/.codex/skills/claude-code-delegate/scripts/run_claude.sh \
      --prompt "Read .ai/claude_task_<name>.md and execute all instructions inside." \
      --repo "$PWD" \
      --log-file .ai/claude_log_<name>.txt \
      --output-file .ai/claude_output_<name>.json
    ```
 
-   For installed skill use outside this repo, adapt or copy the wrapper path to wherever `run_claude.sh` or `run_claude.ps1` is installed. PowerShell and optional flags are documented in `references/wrapper.md`.
+   On Windows, use the bundled PowerShell wrapper under `$env:USERPROFILE\.codex\skills\claude-code-delegate\scripts\run_claude.ps1`. PowerShell and optional flags are documented in `references/wrapper.md`.
 
 4. **Read status**: open `.ai/claude_log_<name>.txt.result.json`.
    - `success` means Claude exited 0; review is still required.

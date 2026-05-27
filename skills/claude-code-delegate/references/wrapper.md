@@ -1,13 +1,13 @@
 # Claude wrapper reference
 
-In this project, the `scripts/run_claude.sh` and `scripts/run_claude.ps1` wrappers live in the repository-root `scripts/` directory. They run Claude Code CLI synchronously, detect quota and rate-limit failures, write sentinel files, capture delegate output, and emit a machine-readable `<log>.result.json`.
+This skill bundles `scripts/run_claude.sh` and `scripts/run_claude.ps1` next to `SKILL.md`. They run Claude Code CLI synchronously, detect quota and rate-limit failures, write sentinel files, capture delegate output, and emit a machine-readable `<log>.result.json`.
 
-For installed skill use outside this repo, run from this repo/project root or adapt/copy the wrapper path to wherever you installed the scripts.
+For user-scope installs, the wrapper path is under the installed skill directory, for example `~/.codex/skills/claude-code-delegate/scripts/run_claude.sh` on macOS/Linux or `$env:USERPROFILE\.codex\skills\claude-code-delegate\scripts\run_claude.ps1` on Windows.
 
 ## Bash invocation
 
 ```bash
-bash scripts/run_claude.sh \
+bash ~/.codex/skills/claude-code-delegate/scripts/run_claude.sh \
   --prompt "Read .ai/claude_task_<name>.md and execute all instructions inside." \
   --repo "$PWD" \
   --log-file .ai/claude_log_<name>.txt \
@@ -27,7 +27,8 @@ Optional flags:
 ## PowerShell invocation
 
 ```powershell
-& ".\scripts\run_claude.ps1" `
+$SkillDir = Join-Path $env:USERPROFILE ".codex\skills\claude-code-delegate"
+& (Join-Path $SkillDir "scripts\run_claude.ps1") `
     -Prompt "Read .ai/claude_task_<name>.md and execute all instructions inside." `
     -Repo (Get-Location).Path `
     -LogFile ".ai\claude_log_<name>.txt" `
